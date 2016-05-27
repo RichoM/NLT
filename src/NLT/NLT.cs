@@ -60,12 +60,32 @@ namespace NaturalLanguageTranslator
 
         public CultureInfo CurrentCulture
         {
+            get { return GetCulture(CurrentLanguage); }
+            set { CurrentLanguage = value.Name; }
+        }
+
+        public string[] AvailableLanguages { get { return availableLanguages; } }
+
+        public CultureInfo[] AvailableCultures
+        {
             get
             {
-                return CultureInfo.GetCultures(CultureTypes.AllCultures)
-                    .FirstOrDefault(c => CurrentLanguage.Equals(c.Name));
+                return AvailableLanguages
+                    .Select(each => GetCulture(each))
+                    .ToArray();
             }
-            set { CurrentLanguage = value.Name; }
+        }
+
+        public string Translate(string original)
+        {
+            if (translations.ContainsKey(original))
+            {
+                return translations[original];
+            }
+            else
+            {
+                return original;
+            }
         }
 
         private void UpdateTranslations()
@@ -83,17 +103,12 @@ namespace NaturalLanguageTranslator
                 rowIndex++;
             }
         }
-
-        public string Translate(string original)
+        
+        private CultureInfo GetCulture(string language)
         {
-            if (translations.ContainsKey(original))
-            {
-                return translations[original];
-            }
-            else
-            {
-                return original;
-            }
+            return CultureInfo
+                .GetCultures(CultureTypes.AllCultures)
+                .FirstOrDefault(c => CurrentLanguage.Equals(c.Name));
         }
     }
 }
