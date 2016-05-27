@@ -22,5 +22,12 @@ namespace NLTTest
         {
             Assert.AreEqual("en", NLT.Default.CurrentLanguage);
         }
+
+        [TestMethod]
+        public void ChangingCurrentLanguageWorksAsExpected()
+        {
+            NLT.Default.CurrentLanguage = "es";
+            Assert.AreEqual("Hola", "Hello".Translated());
+        }
     }
 }
