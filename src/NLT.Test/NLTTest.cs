@@ -4,6 +4,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using NaturalLanguageTranslator;
 using System.IO;
 using System.Globalization;
+using System.Linq;
 
 namespace NLTTest
 {
@@ -28,6 +29,12 @@ namespace NLTTest
         {
             NLT.Default.CurrentLanguage = "es";
             Assert.AreEqual("Hola", "Hello".Translated());
+        }
+
+        [TestMethod]
+        public void RetrievingAvailableLanguagesWorks()
+        {
+            Assert.IsTrue(NLT.Default.AvailableLanguages.SequenceEqual(new string[] { "en", "es" }));
         }
     }
 }
