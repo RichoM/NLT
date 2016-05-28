@@ -35,11 +35,8 @@ namespace NaturalLanguageTranslator
 
             foreach (string[] row in CSV.ReadFile(translationsFile, separator))
             {
-                if (availableLanguages == null)
-                {
-                    availableLanguages = row;
-                    break;
-                }
+                availableLanguages = row;
+                break; // We only care about the first row
             }
             CurrentCulture = CultureInfo.CurrentCulture;
         }
@@ -108,7 +105,7 @@ namespace NaturalLanguageTranslator
         {
             return CultureInfo
                 .GetCultures(CultureTypes.AllCultures)
-                .FirstOrDefault(c => CurrentLanguage.Equals(c.Name));
+                .FirstOrDefault(c => language.Equals(c.Name));
         }
     }
 }

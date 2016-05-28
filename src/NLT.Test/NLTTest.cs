@@ -36,5 +36,29 @@ namespace NLTTest
         {
             Assert.IsTrue(NLT.Default.AvailableLanguages.SequenceEqual(new string[] { "en", "es" }));
         }
+
+        [TestMethod]
+        public void CurrentCultureIsConfiguredCorrectly()
+        {
+            Assert.AreEqual(CultureInfo.GetCultureInfo("en"), NLT.Default.CurrentCulture);
+        }
+
+        [TestMethod]
+        public void ChangingCurrentCultureWorksAsExpected()
+        {
+            NLT.Default.CurrentCulture = CultureInfo.GetCultureInfo("es");
+            Assert.AreEqual("Hola", "Hello".Translated());
+        }
+
+        [TestMethod]
+        public void RetrievingAvailableCulturesWorks()
+        {
+            Assert.IsTrue(NLT.Default.AvailableCultures
+                .SequenceEqual(new CultureInfo[]
+                {
+                    CultureInfo.GetCultureInfo("en"),
+                    CultureInfo.GetCultureInfo("es")
+                }));
+        }
     }
 }
