@@ -28,17 +28,36 @@ namespace NaturalLanguageTranslator
         private string currentLanguage;
         private Dictionary<string, string> translations;
 
+        public NLT(string fileName, char separator = ',') : this(new FileInfo(fileName), separator)
+        { }
+
         public NLT(FileInfo translationsFile, char separator = ',')
         {
             this.translationsFile = translationsFile;
             this.separator = separator;
 
+            InitializeAvailableLanguages();
+            InitializeCurrentLanguage();
+        }
+
+        private void InitializeAvailableLanguages()
+        {
             foreach (string[] row in CSV.ReadFile(translationsFile, separator))
             {
                 availableLanguages = row;
                 break; // We only care about the first row
             }
+        }
+
+        private void InitializeCurrentLanguage()
+        {
+            // We try to use the default culture
             CurrentCulture = CultureInfo.CurrentCulture;
+            // But if we can't we just use the first available language
+            if (string.IsNullOrEmpty(CurrentLanguage))
+            {
+                CurrentLanguage = availableLanguages.FirstOrDefault();
+            }
         }
 
         public string CurrentLanguage

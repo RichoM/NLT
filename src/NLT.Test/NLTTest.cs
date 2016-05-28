@@ -60,5 +60,14 @@ namespace NLTTest
                     CultureInfo.GetCultureInfo("es")
                 }));
         }
+
+        [TestMethod]
+        public void ItShouldUseTheDefaultLanguageIfTheThreadCultureIsNotAvailable()
+        {
+            CultureInfo.DefaultThreadCurrentCulture = CultureInfo.GetCultures(CultureTypes.AllCultures).FirstOrDefault();
+
+            Assert.AreEqual(CultureInfo.GetCultureInfo("en"), NLT.Default.CurrentCulture);
+            Assert.AreEqual("en", NLT.Default.CurrentLanguage);
+        }
     }
 }
