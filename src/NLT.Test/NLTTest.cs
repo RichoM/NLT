@@ -12,11 +12,13 @@ namespace NLTTest
     [TestClass]
     public class NLTTest
     {
+        public const string TRANSLATIONS = "translations1.csv";
+
         [TestInitialize]
         public void Setup()
         {
             CultureInfo.DefaultThreadCurrentCulture = CultureInfo.GetCultureInfo("en");
-            NLT.Default = new NLT(new FileInfo("translations1.csv"));
+            NLT.Default = new NLT(new FileInfo(TRANSLATIONS));
         }
 
         [TestMethod]
@@ -74,30 +76,67 @@ namespace NLTTest
         [TestMethod]
         public void NLTCanAutomaticallyCreateTheTranslationsFileIfInstructed()
         {
+            string fileName = RandomFileName();
+            try
+            {
+                NLT nlt = new NLT(fileName);
+                Assert.AreEqual(1, nlt.AvailableLanguages.Length);
+                Assert.AreEqual(CultureInfo.CurrentCulture, nlt.CurrentCulture);
+
+                string[] words = new string[] { "Hello", "Hi", "Table", "Window" };
+                foreach (string word in words) { nlt.Translate(word); }
+                nlt.UpdateTranslationsFile();
+                Assert.IsTrue(File.Exists(fileName), "Translation file doesn't exists");
+                string[][] csv = CSV.ReadFile(fileName).ToArray();
+                Assert.AreEqual(CultureInfo.CurrentCulture.Name, csv[0][0]);
+                Assert.IsTrue(words
+                    .OrderBy(each => each)
+                    .SequenceEqual(csv
+                        .Where((each, index) => index > 0)
+                        .Select(each => each[0])
+                        .OrderBy(each => each)),
+                    "Translations file doesn't contain all the attempted translations");
+            }
+            finally
+            {
+                File.Delete(fileName);
+            }
+        }
+
+        [TestMethod]
+        public void NLTCanUpdateTheTranslationsFileKeepingTheOldData()
+        {
+            string fileName = RandomFileName();
+            try
+            {
+                File.Copy(TRANSLATIONS, fileName);
+                NLT nlt = new NLT(fileName);
+
+                string[] words = new string[] { "Hello", "Hi", "Table", "Window" };
+                foreach (string word in words) { nlt.Translate(word); }
+                nlt.UpdateTranslationsFile();
+                string[][] csv = CSV.ReadFile(fileName).ToArray();
+
+                Assert.IsTrue(csv.All(row => row.Length == 2));
+                Assert.IsTrue(csv.Any(row => "English".Equals(row[0]) && "Inglés".Equals(row[1])));
+                Assert.IsTrue(words.All(word => csv.Select(row => row[0]).Contains(word)));
+                Assert.AreEqual(1, csv.Select(row => row[0]).Count(word => "Hello".Equals(word)));
+            }
+            finally
+            {
+                File.Delete(fileName);
+            }
+        }
+
+        private string RandomFileName()
+        {
             string fileName;
             do
             {
                 fileName = string.Format("test.{0}.csv", Guid.NewGuid());
             }
             while (File.Exists(fileName));
-
-            NLT nlt = new NLT(fileName);
-            Assert.AreEqual(1, nlt.AvailableLanguages.Length);
-            Assert.AreEqual(CultureInfo.CurrentCulture, nlt.CurrentCulture);
-
-            string[] words = new string[] { "Hello", "Hi", "Table", "Window" };
-            foreach(string word in words) { nlt.Translate(word); }
-            nlt.UpdateTranslationsFile();
-            Assert.IsTrue(File.Exists(fileName), "Translation file doesn't exists");
-            string[][] csv = CSV.ReadFile(fileName).ToArray();
-            Assert.AreEqual(CultureInfo.CurrentCulture.Name, csv[0][0]);
-            Assert.IsTrue(words
-                .OrderBy(each => each)
-                .SequenceEqual(csv
-                    .Where((each, index) => index > 0)
-                    .Select(each => each[0])
-                    .OrderBy(each => each)),
-                "Translations file doesn't contain all the attempted translations");
+            return fileName;
         }
     }
 }

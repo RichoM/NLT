@@ -43,7 +43,7 @@ namespace NaturalLanguageTranslator
 
         private void InitializeAvailableLanguages()
         {
-            try
+            if (translationsFile.Exists)
             {
                 foreach (string[] row in CSV.ReadFile(translationsFile, separator))
                 {
@@ -51,9 +51,9 @@ namespace NaturalLanguageTranslator
                     break; // We only care about the first row
                 }
             }
-            catch
+            else
             {
-                // Something happened, use the default culture as available language
+                // The file doesn't exists, use the default culture as available language
                 availableLanguages = new string[] { CultureInfo.CurrentCulture.TwoLetterISOLanguageName };
             }
         }
@@ -118,6 +118,7 @@ namespace NaturalLanguageTranslator
         public void UpdateTranslationsFile()
         {
             string[] sortedUsed = used.OrderBy(each => each.Value).Select(each => each.Key).ToArray();
+            string[] sortedExisting = translations.Keys.ToArray();
             Dictionary<string, List<string>> updatedTranslations = new Dictionary<string, List<string>>();
             NLT nlt = new NLT(translationsFile, separator);
             foreach (string language in availableLanguages)
@@ -127,6 +128,13 @@ namespace NaturalLanguageTranslator
                 foreach (string text in sortedUsed)
                 {
                     languageTranslations.Add(nlt.Translate(text));
+                }
+                foreach (string text in sortedExisting)
+                {
+                    if (!sortedUsed.Contains(text))
+                    {
+                        languageTranslations.Add(nlt.Translate(text));
+                    }
                 }
                 updatedTranslations[language] = languageTranslations;
             }
@@ -145,7 +153,7 @@ namespace NaturalLanguageTranslator
                 writer.WriteLine();
 
                 // Now write the translations
-                for(int i = 0; i < sortedUsed.Length; i++)
+                for(int i = 0; i < updatedTranslations.First().Value.Count; i++)
                 {
                     for (int j = 0; j < availableLanguages.Length; j++)
                     {
@@ -185,8 +193,8 @@ namespace NaturalLanguageTranslator
         private void UpdateTranslations()
         {
             translations = new Dictionary<string, string>();
+            if (!translationsFile.Exists) return;
             int langIndex = Array.IndexOf(availableLanguages, currentLanguage);
-            if (langIndex == 0) return; // Special case: "official" language
             int rowIndex = 0;
             foreach(string[] row in CSV.ReadFile(translationsFile, separator))
             {
