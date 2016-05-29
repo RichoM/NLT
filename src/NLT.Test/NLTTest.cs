@@ -5,6 +5,7 @@ using NaturalLanguageTranslator;
 using System.IO;
 using System.Globalization;
 using System.Linq;
+using CSVUtils;
 
 namespace NLTTest
 {
@@ -68,6 +69,35 @@ namespace NLTTest
 
             Assert.AreEqual(CultureInfo.GetCultureInfo("en"), NLT.Default.CurrentCulture);
             Assert.AreEqual("en", NLT.Default.CurrentLanguage);
+        }
+
+        [TestMethod]
+        public void NLTCanAutomaticallyCreateTheTranslationsFileIfInstructed()
+        {
+            string fileName;
+            do
+            {
+                fileName = string.Format("test.{0}.csv", Guid.NewGuid());
+            }
+            while (File.Exists(fileName));
+
+            NLT nlt = new NLT(fileName);
+            Assert.AreEqual(1, nlt.AvailableLanguages.Length);
+            Assert.AreEqual(CultureInfo.CurrentCulture, nlt.CurrentCulture);
+
+            string[] words = new string[] { "Hello", "Hi", "Table", "Window" };
+            foreach(string word in words) { nlt.Translate(word); }
+            nlt.UpdateTranslationsFile();
+            Assert.IsTrue(File.Exists(fileName), "Translation file doesn't exists");
+            string[][] csv = CSV.ReadFile(fileName).ToArray();
+            Assert.AreEqual(CultureInfo.CurrentCulture.Name, csv[0][0]);
+            Assert.IsTrue(words
+                .OrderBy(each => each)
+                .SequenceEqual(csv
+                    .Where((each, index) => index > 0)
+                    .Select(each => each[0])
+                    .OrderBy(each => each)),
+                "Translations file doesn't contain all the attempted translations");
         }
     }
 }

@@ -27,6 +27,7 @@ namespace NaturalLanguageTranslator
         private string[] availableLanguages = null;
         private string currentLanguage;
         private Dictionary<string, string> translations;
+        private Dictionary<string, int> used = new Dictionary<string, int>();
 
         public NLT(string fileName, char separator = ',') : this(new FileInfo(fileName), separator)
         { }
@@ -42,10 +43,18 @@ namespace NaturalLanguageTranslator
 
         private void InitializeAvailableLanguages()
         {
-            foreach (string[] row in CSV.ReadFile(translationsFile, separator))
+            try
             {
-                availableLanguages = row;
-                break; // We only care about the first row
+                foreach (string[] row in CSV.ReadFile(translationsFile, separator))
+                {
+                    availableLanguages = row;
+                    break; // We only care about the first row
+                }
+            }
+            catch
+            {
+                // Something happened, use the default culture as available language
+                availableLanguages = new string[] { CultureInfo.CurrentCulture.TwoLetterISOLanguageName };
             }
         }
 
@@ -65,7 +74,8 @@ namespace NaturalLanguageTranslator
             get { return currentLanguage; }
             set
             {
-                if (availableLanguages.Contains(value))
+                if (availableLanguages.Contains(value)
+                    && !string.Equals(currentLanguage, value))
                 {
                     currentLanguage = value;
                     UpdateTranslations();
@@ -94,6 +104,7 @@ namespace NaturalLanguageTranslator
 
         public string Translate(string original)
         {
+            RegisterUsage(original);
             if (translations.ContainsKey(original))
             {
                 return translations[original];
@@ -101,6 +112,73 @@ namespace NaturalLanguageTranslator
             else
             {
                 return original;
+            }
+        }
+
+        public void UpdateTranslationsFile()
+        {
+            string[] sortedUsed = used.OrderBy(each => each.Value).Select(each => each.Key).ToArray();
+            Dictionary<string, List<string>> updatedTranslations = new Dictionary<string, List<string>>();
+            NLT nlt = new NLT(translationsFile, separator);
+            foreach (string language in availableLanguages)
+            {
+                nlt.CurrentLanguage = language;
+                List<string> languageTranslations = new List<string>();
+                foreach (string text in sortedUsed)
+                {
+                    languageTranslations.Add(nlt.Translate(text));
+                }
+                updatedTranslations[language] = languageTranslations;
+            }
+            
+            using (StreamWriter writer = new StreamWriter(translationsFile.FullName, false))
+            {
+                // Write header
+                for (int i = 0; i < availableLanguages.Length; i++)
+                {
+                    if (i > 0)
+                    {
+                        writer.Write(separator);
+                    }
+                    writer.Write(availableLanguages[i]);
+                }
+                writer.WriteLine();
+
+                // Now write the translations
+                for(int i = 0; i < sortedUsed.Length; i++)
+                {
+                    for (int j = 0; j < availableLanguages.Length; j++)
+                    {
+                        if (j > 0)
+                        {
+                            writer.Write(separator);
+                        }
+                        string lang = availableLanguages[j];
+                        string text = updatedTranslations[lang][i];
+                        text = text.Replace("\"", "\"\""); // Escape quotes, if any
+                        bool enclose = text.Contains(separator)
+                            || text.Contains('"')
+                            || text.Contains('\n')
+                            || text.Contains('\r');
+                        if (enclose) { writer.Write('"'); }
+                        writer.Write(text);
+                        if (enclose) { writer.Write('"'); }
+                    }
+                    writer.WriteLine();
+                }
+                writer.Flush();
+            }
+        }
+        
+        private void RegisterUsage(string text)
+        {
+            if (!used.ContainsKey(text))
+            {
+                used[text] = 1;
+            }
+            else
+            {
+                used[text]++;
             }
         }
 

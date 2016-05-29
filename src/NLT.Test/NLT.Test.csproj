@@ -35,6 +35,14 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="RichoM.CSV, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\RichoM.CSV.1.0.0-CI00006\lib\net452\RichoM.CSV.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="RichoM.Streams, Version=1.0.3.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\RichoM.Streams.1.0.3-CI00012\lib\net452\RichoM.Streams.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="System" />
   </ItemGroup>
   <Choose>
@@ -54,6 +62,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="packages.config" />
     <None Include="translations1.csv">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
