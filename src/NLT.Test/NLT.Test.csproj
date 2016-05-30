@@ -36,7 +36,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="RichoM.CSV, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\RichoM.CSV.1.0.0-CI00006\lib\net452\RichoM.CSV.dll</HintPath>
+      <HintPath>..\packages\RichoM.CSV.1.0.0-CI00007\lib\net452\RichoM.CSV.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="RichoM.Streams, Version=1.0.3.0, Culture=neutral, processorArchitecture=MSIL">
