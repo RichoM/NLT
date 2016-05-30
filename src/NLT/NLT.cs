@@ -118,64 +118,23 @@ namespace NaturalLanguageTranslator
         public void UpdateTranslationsFile()
         {
             string[] sortedUsed = used.OrderBy(each => each.Value).Select(each => each.Key).ToArray();
-            string[] sortedExisting = translations.Keys.ToArray();
-            Dictionary<string, List<string>> updatedTranslations = new Dictionary<string, List<string>>();
+            string[] sortedExisting = translations.Keys.Except(sortedUsed).ToArray();
+            string[] sortedAll = sortedUsed.Concat(sortedExisting).ToArray();
+            string[,] updatedTranslations = new string[sortedAll.Length + 1, availableLanguages.Length];
+            
             NLT nlt = new NLT(translationsFile, separator);
-            foreach (string language in availableLanguages)
+            for (int j = 0; j < availableLanguages.Length; j++)
             {
+                string language = availableLanguages[j];
                 nlt.CurrentLanguage = language;
-                List<string> languageTranslations = new List<string>();
-                foreach (string text in sortedUsed)
+                updatedTranslations[0, j] = language;
+                for (int i = 0; i < sortedAll.Length; i++)
                 {
-                    languageTranslations.Add(nlt.Translate(text));
+                    updatedTranslations[i + 1, j] = nlt.Translate(sortedAll[i]);
                 }
-                foreach (string text in sortedExisting)
-                {
-                    if (!sortedUsed.Contains(text))
-                    {
-                        languageTranslations.Add(nlt.Translate(text));
-                    }
-                }
-                updatedTranslations[language] = languageTranslations;
             }
             
-            using (StreamWriter writer = new StreamWriter(translationsFile.FullName, false))
-            {
-                // Write header
-                for (int i = 0; i < availableLanguages.Length; i++)
-                {
-                    if (i > 0)
-                    {
-                        writer.Write(separator);
-                    }
-                    writer.Write(availableLanguages[i]);
-                }
-                writer.WriteLine();
-
-                // Now write the translations
-                for(int i = 0; i < updatedTranslations.First().Value.Count; i++)
-                {
-                    for (int j = 0; j < availableLanguages.Length; j++)
-                    {
-                        if (j > 0)
-                        {
-                            writer.Write(separator);
-                        }
-                        string lang = availableLanguages[j];
-                        string text = updatedTranslations[lang][i];
-                        text = text.Replace("\"", "\"\""); // Escape quotes, if any
-                        bool enclose = text.Contains(separator)
-                            || text.Contains('"')
-                            || text.Contains('\n')
-                            || text.Contains('\r');
-                        if (enclose) { writer.Write('"'); }
-                        writer.Write(text);
-                        if (enclose) { writer.Write('"'); }
-                    }
-                    writer.WriteLine();
-                }
-                writer.Flush();
-            }
+            CSV.WriteFile(updatedTranslations.ToEnumerable(), translationsFile, separator);
         }
         
         private void RegisterUsage(string text)
