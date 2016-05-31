@@ -87,7 +87,7 @@ namespace NLTTest
                 foreach (string word in words) { nlt.Translate(word); }
                 nlt.UpdateTranslationsFile();
                 Assert.IsTrue(File.Exists(fileName), "Translation file doesn't exists");
-                string[][] csv = CSV.ReadFile(fileName).ToArray();
+                string[][] csv = CSV.ReadFile(fileName).ToJaggedArray();
                 Assert.AreEqual(CultureInfo.CurrentCulture.Name, csv[0][0]);
                 Assert.IsTrue(words
                     .OrderBy(each => each)
@@ -115,7 +115,7 @@ namespace NLTTest
                 string[] words = new string[] { "Hello", "Hi", "Table", "Window" };
                 foreach (string word in words) { nlt.Translate(word); }
                 nlt.UpdateTranslationsFile();
-                string[][] csv = CSV.ReadFile(fileName).ToArray();
+                string[][] csv = CSV.ReadFile(fileName).ToJaggedArray();
 
                 Assert.IsTrue(csv.All(row => row.Length == 2));
                 Assert.IsTrue(csv.Any(row => "English".Equals(row[0]) && "Inglés".Equals(row[1])));
