@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 
 using CSVUtils;
 using System.Globalization;
+using System.Text.RegularExpressions;
 
 namespace NaturalLanguageTranslator
 {
@@ -87,7 +88,7 @@ namespace NaturalLanguageTranslator
         public CultureInfo CurrentCulture
         {
             get { return GetCulture(CurrentLanguage); }
-            set { CurrentLanguage = value.Name; }
+            set { CurrentLanguage = GetLanguage(value); }
         }
 
         public string[] AvailableLanguages { get { return availableLanguages; } }
@@ -170,6 +171,15 @@ namespace NaturalLanguageTranslator
             return CultureInfo
                 .GetCultures(CultureTypes.AllCultures)
                 .FirstOrDefault(c => language.Equals(c.Name));
+        }
+
+        private string GetLanguage(CultureInfo culture)
+        {
+            string candidate = availableLanguages
+                .Where(lang => Regex.IsMatch(culture.Name, lang))
+                .OrderByDescending(lang => lang.Length)
+                .FirstOrDefault();
+            return candidate ?? availableLanguages.FirstOrDefault();
         }
     }
 }

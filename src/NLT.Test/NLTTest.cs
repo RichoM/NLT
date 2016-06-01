@@ -37,7 +37,7 @@ namespace NLTTest
         [TestMethod]
         public void RetrievingAvailableLanguagesWorks()
         {
-            Assert.IsTrue(NLT.Default.AvailableLanguages.SequenceEqual(new string[] { "en", "es" }));
+            Assert.IsTrue(NLT.Default.AvailableLanguages.SequenceEqual(new string[] { "en", "es", "es-ES" }));
         }
 
         [TestMethod]
@@ -60,7 +60,8 @@ namespace NLTTest
                 .SequenceEqual(new CultureInfo[]
                 {
                     CultureInfo.GetCultureInfo("en"),
-                    CultureInfo.GetCultureInfo("es")
+                    CultureInfo.GetCultureInfo("es"),
+                    CultureInfo.GetCultureInfo("es-ES")
                 }));
         }
 
@@ -117,7 +118,7 @@ namespace NLTTest
                 nlt.UpdateTranslationsFile();
                 string[][] csv = CSV.ReadFile(fileName).ToJaggedArray();
 
-                Assert.IsTrue(csv.All(row => row.Length == 2));
+                Assert.IsTrue(csv.All(row => row.Length == 3));
                 Assert.IsTrue(csv.Any(row => "English".Equals(row[0]) && "Inglés".Equals(row[1])));
                 Assert.IsTrue(words.All(word => csv.Select(row => row[0]).Contains(word)));
                 Assert.AreEqual(1, csv.Select(row => row[0]).Count(word => "Hello".Equals(word)));
@@ -126,6 +127,20 @@ namespace NLTTest
             {
                 File.Delete(fileName);
             }
+        }
+
+        [TestMethod]
+        public void ChangingCultureTriesToMatchTheMostSpecificLanguageAvailable()
+        {
+            // Culture "es-AR" should use "es"
+            NLT.Default.CurrentCulture = CultureInfo.GetCultureInfo("es-AR");
+            Assert.AreEqual("es", NLT.Default.CurrentLanguage);
+            Assert.AreEqual(CultureInfo.GetCultureInfo("es"), NLT.Default.CurrentCulture);
+
+            // But "es-ES" should use "es-ES"
+            NLT.Default.CurrentCulture = CultureInfo.GetCultureInfo("es-ES");
+            Assert.AreEqual("es-ES", NLT.Default.CurrentLanguage);
+            Assert.AreEqual(CultureInfo.GetCultureInfo("es-ES"), NLT.Default.CurrentCulture);
         }
 
         private string RandomFileName()
